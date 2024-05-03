@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.vkinternshiptask"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.vkinternshiptask"
@@ -50,6 +50,7 @@ android {
 }
 
 dependencies {
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
 
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
