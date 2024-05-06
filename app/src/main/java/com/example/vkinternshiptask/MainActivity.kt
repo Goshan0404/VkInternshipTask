@@ -77,7 +77,7 @@ class MainActivity : ComponentActivity() {
                     Scaffold(topBar = {
                         TopAppBar(title = {
                             Row {
-                                Text(text = "Товары")
+                                Text(text = getString(R.string.products))
                                 Spacer(modifier = Modifier.width(3.dp))
                                 if (!networkIsConnected)
                                     Icon(
