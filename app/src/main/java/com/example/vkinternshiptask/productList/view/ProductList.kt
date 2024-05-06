@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -88,7 +89,8 @@ private fun SearchField(
             query.value = it
             productListViewModel.getProducts(query.value)
         },
-//            background = Color.Transparent,
+        label =  { Text(text = stringResource(R.string.search))},
+
         maxLines = 1,
         singleLine = true,
         leadingIcon = {
