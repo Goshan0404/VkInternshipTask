@@ -1,24 +1,40 @@
 package com.example.vkinternshiptask.productList.view
 
-import android.content.Context
-import android.net.ConnectivityManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,56 +43,66 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.example.vkfuture.utils.network.ConnectivityObserver
 import com.example.vkinternshiptask.R
 import com.example.vkinternshiptask.UiState
-
+import com.example.vkinternshiptask.productList.domain.model.Product
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun ProductList(productListViewModel: ProductListViewModel, context: Context) {
+fun ProductList(
+    productListViewModel: ProductListViewModel
+) {
     val uiState = productListViewModel.uiState
-
-    val connectivityManager =
-        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-
-
-    val observer = productListViewModel.observer.collectAsState(initial = productListViewModel.networkObserver.isConnected)
-
-    if (uiState.value.data != null)
-        LazyVerticalGrid(
-            modifier = Modifier.padding(vertical = 3.dp, horizontal = 3.dp),
-            columns = GridCells.Adaptive(minSize = 150.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(uiState.value.data ?: emptyList()) {
-                ProductCard(it)
-            }
-        }
-
-    if (observer.value == ConnectivityObserver.Status.Lost) {
-        Box(
-            modifier = Modifier
-                .width(50.dp)
-                .height(50.dp)
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-
-
-            Image(
-                painter = painterResource(id = R.drawable.network_connection_error),
-                contentDescription = "Error"
-            )
-        }
+    val listState = rememberLazyStaggeredGridState()
+    val query = rememberSaveable { mutableStateOf("") }
+    val products = remember {
+        mutableStateListOf<Product>()
     }
 
-    if (uiState.value.error is UiState.Error.NetworkError
-        && observer.value != ConnectivityObserver.Status.Lost) {
+    Column {
+        SearchField(query, productListViewModel)
+        Spacer(modifier = Modifier.height(8.dp))
+        ProductsList(uiState, products, query, listState)
+    }
+    ObserveLazyListState(listState, query, uiState, productListViewModel)
+    ErrorImage(uiState)
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SearchField(
+    query: MutableState<String>,
+    productListViewModel: ProductListViewModel
+) {
+    TextField(
+        modifier = Modifier.padding(start = 8.dp),
+        colors = TextFieldDefaults.textFieldColors(
+            containerColor = Color.Transparent
+        ),
+        value = query.value,
+        onValueChange = {
+            query.value = it
+            productListViewModel.getProducts(query.value)
+        },
+//            background = Color.Transparent,
+        maxLines = 1,
+        singleLine = true,
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = "Search icon"
+            )
+        },
+    )
+}
+
+@Composable
+private fun ErrorImage(uiState: State<UiState<MutableList<Product>>>) {
+    if (uiState.value.error is UiState.Error.RequestError) {
         Box(
             modifier = Modifier
                 .width(50.dp)
@@ -84,8 +110,6 @@ fun ProductList(productListViewModel: ProductListViewModel, context: Context) {
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-
-
             Image(
                 painter = painterResource(id = R.drawable.network_error),
                 contentDescription = "Error"
@@ -95,17 +119,58 @@ fun ProductList(productListViewModel: ProductListViewModel, context: Context) {
 }
 
 @Composable
-private fun ProductCard(it: com.example.vkinternshiptask.productList.domain.model.Product) {
+private fun ProductsList(
+    uiState: State<UiState<MutableList<Product>>>,
+    products: SnapshotStateList<Product>,
+    query: MutableState<String>,
+    listState: LazyStaggeredGridState
+) {
+    if (uiState.value.data != null) {
+        if (query.value.isNotBlank())
+            products.clear()
+        products.addAll(uiState.value.data ?: emptyList())
+
+        LazyVerticalStaggeredGrid(
+            modifier = Modifier.padding(vertical = 3.dp, horizontal = 3.dp),
+            columns = StaggeredGridCells.Adaptive(150.dp),
+            verticalItemSpacing = 4.dp,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            state = listState
+        ) {
+            items(products) {
+                ProductCard(it)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ObserveLazyListState(
+    listState: LazyStaggeredGridState,
+    query: MutableState<String>,
+    uiState: State<UiState<MutableList<Product>>>,
+    productListViewModel: ProductListViewModel
+) {
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collectLatest { index ->
+                if (index != null && index >= uiState.value.data!!.size - 1 && query.value.isBlank()) {
+                    productListViewModel.getProducts(skip = index)
+                }
+            }
+    }
+}
+
+@Composable
+private fun ProductCard(it: Product) {
     Card(
-        colors = CardDefaults.cardColors(Color(249, 249, 249, 250)),
+        colors = CardDefaults.cardColors(Color(220, 220, 220, 250)),
         modifier = Modifier
             .fillMaxSize()
-            .clip(RectangleShape)
+            .clip(RectangleShape),
+        elevation = CardDefaults.cardElevation(8.dp)
     ) {
-        Box(
-            Modifier
-                .fillMaxSize()
-        )
+        Box()
         {
 
             ProductImage(it)
@@ -113,16 +178,24 @@ private fun ProductCard(it: com.example.vkinternshiptask.productList.domain.mode
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .clip(CircleShape)
-                    .padding(bottom = 6.dp)
+                    .padding(bottom = 9.dp)
+                    .clip(RoundedCornerShape(100.dp))
                     .background(
-                        Color(102, 102, 102, 80)
+                        Color(102, 102, 102, 200)
                     ),
             ) {
-                Text(text = it.title, color = Color.White)
+                val title = if (it.title.length > 10)
+                    it.title.substring(0, 10)
+                else
+                    it.title
+                Text(
+                    modifier = Modifier.padding(horizontal = 9.dp),
+                    text = title,
+                    color = Color.White,
+                    fontSize = 15.sp
+                )
             }
         }
-
         Text(text = it.description)
     }
 }

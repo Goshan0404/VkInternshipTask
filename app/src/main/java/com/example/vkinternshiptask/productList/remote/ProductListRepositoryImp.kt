@@ -24,10 +24,22 @@ class ProductListRepositoryImp @Inject constructor(private val productApi: Produ
     override suspend fun getProducts(skip: Int): Resources<List<Product>> {
 
         return try {
-
-
             val response = productApi.getProducts(skip = skip)
 
+            if (response.isSuccessful) {
+                Resources.Success(
+                    response.body()?.products?.map { it.toProduct() }
+                        ?: listOf())
+            } else
+                Resources.Error(message = response.message())
+        } catch (e: Exception) {
+            Resources.Error(message = "Network Exception")
+        }
+    }
+
+    override suspend fun searchProducts(query: String): Resources<List<Product>> {
+        return try {
+            val response = productApi.searchProducts(query)
 
             if (response.isSuccessful) {
                 Resources.Success(

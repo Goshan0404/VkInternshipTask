@@ -23,37 +23,35 @@ import javax.inject.Inject
 
 class ProductListViewModel @Inject constructor(
     private val repository: ProductListRepository,
-    private val context: Application
+    context: Application
 ) : ViewModel() {
-    private val _uiState: MutableState<UiState<List<Product>>> = mutableStateOf(UiState())
-    val uiState: State<UiState<List<Product>>> = _uiState
+    private val _uiState: MutableState<UiState<MutableList<Product>>> = mutableStateOf(UiState())
+    val uiState: State<UiState<MutableList<Product>>> = _uiState
 
-    private val productDomainResource = MutableSharedFlow<Resources<List<Product>>>()
+    private val productState = MutableSharedFlow<Resources<List<Product>>>()
 
-    val networkObserver = NetworkConnectionObserver(context)
-    val observer = networkObserver.observe()
+    private val networkObserver = NetworkConnectionObserver(context)
+    private val observer = networkObserver.observe()
 
 
     init {
         viewModelScope.launch {
             observer.collect {
                 if (it == ConnectivityObserver.Status.Available)
-                    updateProductResource(repository)
+                    getProducts()
             }
         }
 
         viewModelScope.launch {
 
-            productDomainResource.collect {
+            productState.collect {
                 when (it) {
                     is Resources.Success -> {
-                        _uiState.value = UiState(data = it.data ?: emptyList())
+                        _uiState.value = UiState(data = it.data?.toMutableList() ?: mutableListOf())
                     }
 
                     is Resources.Error -> {
-
-
-                        _uiState.value = UiState(error = UiState.Error.NetworkError(it.message))
+                        _uiState.value = UiState(error = UiState.Error.RequestError(it.message))
                     }
 
                 }
@@ -62,8 +60,14 @@ class ProductListViewModel @Inject constructor(
         }
     }
 
-    private suspend fun updateProductResource(repository: ProductListRepository) {
-        productDomainResource.emit(repository.getProducts(0))
+
+    fun getProducts(query: String = "", skip: Int = 0) {
+        viewModelScope.launch {
+            if (query.isBlank())
+                productState.emit(repository.getProducts(skip))
+            else
+                productState.emit(repository.searchProducts(query))
+        }
     }
 
 
@@ -82,5 +86,5 @@ class ProductListViewModel @Inject constructor(
                 context
             ) as T
         }
-}
+    }
 }

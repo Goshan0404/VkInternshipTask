@@ -19,10 +19,10 @@ class NetworkConnectionObserver(context: Context) : ConnectivityObserver {
         connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
 
     val isConnected = when {
-        capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == false -> ConnectivityObserver.Status.Available
-        capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == false -> ConnectivityObserver.Status.Available
-        capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == false -> ConnectivityObserver.Status.Available
-        else -> ConnectivityObserver.Status.Lost
+        capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == false -> true
+        capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == false -> true
+        capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == false -> true
+        else -> false
     }
 
     override fun observe(): Flow<ConnectivityObserver.Status> {
