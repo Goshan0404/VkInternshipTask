@@ -1,5 +1,7 @@
 package com.example.vkinternshiptask.productList.view
 
+import android.graphics.Paint.Align
+import android.widget.ProgressBar
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -68,6 +71,8 @@ fun ProductList(
         SearchField(query, productListViewModel)
         Spacer(modifier = Modifier.height(8.dp))
         ProductsList(uiState, products, query, listState)
+        if (uiState.value.isLoading)
+            CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
     }
     ObserveLazyListState(listState, query, uiState, productListViewModel)
     ErrorImage(uiState)
@@ -89,7 +94,7 @@ private fun SearchField(
             query.value = it
             productListViewModel.getProducts(query.value)
         },
-        label =  { Text(text = stringResource(R.string.search))},
+        label = { Text(text = stringResource(R.string.search)) },
 
         maxLines = 1,
         singleLine = true,

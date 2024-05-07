@@ -62,6 +62,7 @@ class ProductListViewModel @Inject constructor(
 
 
     fun getProducts(query: String = "", skip: Int = 0) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
         viewModelScope.launch {
             if (query.isBlank())
                 productState.emit(repository.getProducts(skip))
