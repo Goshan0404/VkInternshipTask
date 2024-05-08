@@ -7,6 +7,7 @@
 __Implemented__: 
 - List of products
 - Search products
+- Product card
 - Network connection observer
 
 __Used:__ compose, dagger, retrofit, glide
