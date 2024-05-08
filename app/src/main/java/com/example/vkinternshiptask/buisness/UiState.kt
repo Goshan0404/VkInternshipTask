@@ -1,4 +1,4 @@
-package com.example.vkinternshiptask
+package com.example.vkinternshiptask.buisness
 
 data class UiState<T>(
     val isLoading: Boolean = false,

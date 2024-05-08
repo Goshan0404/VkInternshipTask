@@ -1,4 +1,4 @@
-package com.example.vkinternshiptask.productList.domain.model
+package com.example.vkinternshiptask.buisness
 
 data class Product(
     val brand: String,
@@ -6,6 +6,7 @@ data class Product(
     val description: String,
     val discountPercentage: Double,
     val id: Int,
+    val images: List<String>,
     val price: Int,
     val rating: Double,
     val stock: Int,

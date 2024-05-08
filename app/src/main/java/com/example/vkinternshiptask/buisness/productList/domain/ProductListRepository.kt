@@ -1,7 +1,7 @@
-package com.example.vkinternshiptask.productList.domain
+package com.example.vkinternshiptask.buisness.productList.domain
 
-import com.example.vkinternshiptask.Resources
-import com.example.vkinternshiptask.productList.domain.model.Product
+import com.example.vkinternshiptask.buisness.Product
+import com.example.vkinternshiptask.buisness.Resources
 
 interface ProductListRepository {
 

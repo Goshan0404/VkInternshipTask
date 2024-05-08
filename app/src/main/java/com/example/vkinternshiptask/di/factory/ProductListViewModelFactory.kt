@@ -1,8 +1,7 @@
 package com.example.vkinternshiptask.di.factory
 
 import android.app.Application
-import androidx.lifecycle.AbstractSavedStateViewModelFactory
-import com.example.vkinternshiptask.productList.view.ProductListViewModel
+import com.example.vkinternshiptask.buisness.productList.presentation.ProductListViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 

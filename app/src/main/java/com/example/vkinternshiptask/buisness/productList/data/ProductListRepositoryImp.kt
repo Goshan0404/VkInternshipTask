@@ -1,20 +1,14 @@
-package com.example.vkinternshiptask.productList.remote
+package com.example.vkinternshiptask.buisness.productList.data
 
 import android.util.Log
-import com.example.vkinternshiptask.Resources
-import com.example.vkinternshiptask.productList.domain.ProductListRepository
-import com.example.vkinternshiptask.productList.domain.model.Product
+import com.example.vkinternshiptask.buisness.Product
+import com.example.vkinternshiptask.buisness.Resources
+import com.example.vkinternshiptask.buisness.productList.domain.ProductListRepository
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.lang.Exception
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
-class ProductListRepositoryImp @Inject constructor(private val productApi: ProductApi) :
+class ProductListRepositoryImp @Inject constructor(private val productsApi: ProductsApi) :
     ProductListRepository {
 
     val handler = CoroutineExceptionHandler { _, exception ->
@@ -24,7 +18,7 @@ class ProductListRepositoryImp @Inject constructor(private val productApi: Produ
     override suspend fun getProducts(skip: Int): Resources<List<Product>> {
 
         return try {
-            val response = productApi.getProducts(skip = skip)
+            val response = productsApi.getProducts(skip = skip)
 
             if (response.isSuccessful) {
                 Resources.Success(
@@ -39,7 +33,7 @@ class ProductListRepositoryImp @Inject constructor(private val productApi: Produ
 
     override suspend fun searchProducts(query: String): Resources<List<Product>> {
         return try {
-            val response = productApi.searchProducts(query)
+            val response = productsApi.searchProducts(query)
 
             if (response.isSuccessful) {
                 Resources.Success(

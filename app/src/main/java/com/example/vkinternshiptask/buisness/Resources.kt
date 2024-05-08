@@ -1,4 +1,4 @@
-package com.example.vkinternshiptask
+package com.example.vkinternshiptask.buisness
 
 sealed class Resources<T>(val data: T? = null) {
     class Success<T>(data: T): Resources<T>(data)

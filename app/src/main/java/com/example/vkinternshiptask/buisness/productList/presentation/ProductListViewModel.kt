@@ -1,4 +1,4 @@
-package com.example.vkinternshiptask.productList.view
+package com.example.vkinternshiptask.buisness.productList.presentation
 
 import android.app.Application
 import androidx.compose.runtime.MutableState
@@ -10,10 +10,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vkfuture.utils.network.ConnectivityObserver
 import com.example.vkfuture.utils.network.NetworkConnectionObserver
-import com.example.vkinternshiptask.Resources
-import com.example.vkinternshiptask.UiState
-import com.example.vkinternshiptask.productList.domain.ProductListRepository
-import com.example.vkinternshiptask.productList.domain.model.Product
+import com.example.vkinternshiptask.buisness.Resources
+import com.example.vkinternshiptask.buisness.UiState
+import com.example.vkinternshiptask.buisness.Product
+import com.example.vkinternshiptask.buisness.productList.domain.ProductListRepository
+import com.example.vkinternshiptask.di.component.ScreenScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
+@ScreenScope
 class ProductListViewModel @Inject constructor(
     private val repository: ProductListRepository,
     context: Application
@@ -43,7 +45,6 @@ class ProductListViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-
             productState.collect {
                 when (it) {
                     is Resources.Success -> {
@@ -53,7 +54,6 @@ class ProductListViewModel @Inject constructor(
                     is Resources.Error -> {
                         _uiState.value = UiState(error = UiState.Error.RequestError(it.message))
                     }
-
                 }
 
             }

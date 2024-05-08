@@ -1,9 +1,10 @@
-package com.example.vkinternshiptask.productList.view
+package com.example.vkinternshiptask.buisness.productList.presentation
 
-import android.graphics.Paint.Align
-import android.widget.ProgressBar
+import android.app.Application
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,18 +49,27 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.example.vkinternshiptask.MainActivity
 import com.example.vkinternshiptask.R
-import com.example.vkinternshiptask.UiState
-import com.example.vkinternshiptask.productList.domain.model.Product
+import com.example.vkinternshiptask.buisness.UiState
+import com.example.vkinternshiptask.buisness.Product
+import com.example.vkinternshiptask.di.factory.ProductListViewModelFactory
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun ProductList(
-    productListViewModel: ProductListViewModel
+    productListViewModelFactory: ProductListViewModelFactory,
+    application: Application,
+    onNavigate: (String) -> Unit
 ) {
+    val productListViewModel: ProductListViewModel = viewModel(
+        factory = productListViewModelFactory.create(application)
+    )
+
     val uiState = productListViewModel.uiState
     val listState = rememberLazyStaggeredGridState()
     val query = rememberSaveable { mutableStateOf("") }
@@ -70,7 +80,7 @@ fun ProductList(
     Column {
         SearchField(query, productListViewModel)
         Spacer(modifier = Modifier.height(8.dp))
-        ProductsList(uiState, products, query, listState)
+        ProductsList(uiState, products, query, listState, onNavigate)
         if (uiState.value.isLoading)
             CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
     }
@@ -130,7 +140,8 @@ private fun ProductsList(
     uiState: State<UiState<MutableList<Product>>>,
     products: SnapshotStateList<Product>,
     query: MutableState<String>,
-    listState: LazyStaggeredGridState
+    listState: LazyStaggeredGridState,
+    onNavigate: (String) -> Unit
 ) {
     if (uiState.value.data != null) {
         if (query.value.isNotBlank())
@@ -145,7 +156,7 @@ private fun ProductsList(
             state = listState
         ) {
             items(products) {
-                ProductCard(it)
+                ProductCard(it, onNavigate)
             }
         }
     }
@@ -169,17 +180,19 @@ private fun ObserveLazyListState(
 }
 
 @Composable
-private fun ProductCard(it: Product) {
+private fun ProductCard(it: Product, onNavigate: (String) -> Unit) {
     Card(
         colors = CardDefaults.cardColors(Color(220, 220, 220, 250)),
         modifier = Modifier
             .fillMaxSize()
-            .clip(RectangleShape),
+            .clip(RectangleShape)
+            .clickable {
+                onNavigate(MainActivity.PRODUCT_ROUTE.replace("{id}", it.id.toString()))
+            },
         elevation = CardDefaults.cardElevation(8.dp)
     ) {
         Box()
         {
-
             ProductImage(it)
 
             Box(
@@ -209,7 +222,7 @@ private fun ProductCard(it: Product) {
 
 @Composable
 @OptIn(ExperimentalGlideComposeApi::class)
-private fun ProductImage(it: com.example.vkinternshiptask.productList.domain.model.Product) {
+private fun ProductImage(it: Product) {
     GlideImage(
         modifier = Modifier.clip(RectangleShape),
         model = it.thumbnail,
